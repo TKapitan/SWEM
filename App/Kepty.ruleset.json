@@ -1,0 +1,16 @@
+{
+    "name": "TKA Rule Sets",
+    "description": "My own rules for AL checks",
+    "rules": [
+        {
+            "id": "AS0053",
+            "action": "None",
+            "justification": "Do not check extension target level."
+        },
+        {
+            "id": "AS0084",
+            "action": "None",
+            "justification": "Do not force AppSource object range."
+        } 
+    ]
+}
