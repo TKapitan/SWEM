@@ -57,7 +57,7 @@ page 81013 "TKA Sales Ser. Order Lines API"
                 field(timeTo; Rec."TKA Time To") { }
                 field(linkedToLineNo; Rec."TKA Linked to Line No.") { }
                 field(unitPrice; Rec."Unit Price") { }
-                field(closeJob; CloseJob) { }
+                field(closeProjectTask; CloseProjectTask) { }
                 field(isEditable; LineIsEditable)
                 {
                     Editable = false;
@@ -148,11 +148,8 @@ page 81013 "TKA Sales Ser. Order Lines API"
     var
         TKAProject: Record "TKA Project";
         TKAProjectTask: Record "TKA Project Task";
-        InvoicableQty, InternalQty : Decimal;
-        LineIsEditable: Boolean;
-        CloseJob: Boolean;
-        TotalQty: Decimal;
-        ExtensionNo: Code[20];
+        TotalQty, InvoicableQty, InternalQty : Decimal;
+        LineIsEditable, CloseProjectTask : Boolean;
         LineIsNotEditableErr: Label 'The line is not editable.';
 
     local procedure UpdateLineIsEditable()
@@ -168,6 +165,16 @@ page 81013 "TKA Sales Ser. Order Lines API"
             LineIsEditable := false;
     end;
 
+    local procedure UpdateCloseProjectTask()
+    begin
+        GetProjectAndProjectTask();
+        if Rec."TKA Project Task No." <> '' then
+            if TKAProjectTask."TKA Closed" <> CloseProjectTask then begin
+                TKAProjectTask.Validate("TKA Closed", CloseProjectTask);
+                TKAProjectTask.Modify(true);
+            end
+    end;
+
     local procedure GetProjectAndProjectTask()
     begin
         Clear(TKAProject);
@@ -177,7 +184,7 @@ page 81013 "TKA Sales Ser. Order Lines API"
         if Rec."TKA Project No." <> '' then begin
             TKAProject.Get(Rec."TKA Project No.");
 
-            if Rec."TKA Project No." <> '' then
+            if Rec."TKA Project Task No." <> '' then
                 TKAProjectTask.Get(Rec."TKA Project No.", Rec."TKA Project Task No.");
         end;
     end;
@@ -190,21 +197,6 @@ page 81013 "TKA Sales Ser. Order Lines API"
             exit(false);
         WorkType.Get(WorkTypeCode);
         exit(WorkType."TKA Unbilled Works");
-    end;
-
-    [IntegrationEvent(false, false)]
-    procedure OnBeforePropagateSalesLine(var SalesLine: Record "Sales Line"; var InvoicableQty: Decimal; var TotalQty: Decimal; var ExtensionNo: Code[20]);
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    procedure OnAfterPropagateSalesLineBeforePostJob(var SalesLine: Record "Sales Line"; var InvoicableQty: Decimal; var TotalQty: Decimal; var ExtensionNo: Code[20]);
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    procedure OnAfterPropagateSalesLineAfterPostJob(var SalesLine: Record "Sales Line"; var InvoicableQty: Decimal; var TotalQty: Decimal; var ExtensionNo: Code[20]);
-    begin
     end;
 
     local procedure Reopen(DocumentNo: Code[20])
@@ -227,7 +219,6 @@ page 81013 "TKA Sales Ser. Order Lines API"
         NewLineNo, StandardLineNo : Integer;
     begin
         Reopen(Rec."Document No.");
-        OnBeforePropagateSalesLine(Rec, InvoicableQty, TotalQty, ExtensionNo);
 
         NewLineNo := 10000;
         StandardLineNo := 0;
@@ -244,8 +235,6 @@ page 81013 "TKA Sales Ser. Order Lines API"
             Rec.Validate(Quantity, InvoicableQty);
             Rec.Validate("Unit Price", AmountTemp);
 
-            OnAfterPropagateSalesLineBeforePostJob(Rec, InvoicableQty, TotalQty, ExtensionNo);
-
             NewLineNo += 10000;
             Rec."TKA Linked To Line No." := 0;
             Rec.Insert(true);
@@ -257,8 +246,6 @@ page 81013 "TKA Sales Ser. Order Lines API"
         // TODO Email notification about posted/cancelled hours
         // Rec.Validate("ART CU Appointment Sent", false);
         // Rec."ART CU Appoint. Sent To Email" := '';
-
-        OnAfterPropagateSalesLineAfterPostJob(Rec, InvoicableQty, TotalQty, ExtensionNo);
 
         // Insert overheader line
         if (TotalQty - InvoicableQty) <> 0 then begin
@@ -274,6 +261,7 @@ page 81013 "TKA Sales Ser. Order Lines API"
             SalesLine.Validate("TKA Linked To Line No.", StandardLineNo);
             SalesLine.Insert(true);
         end;
+        UpdateCloseProjectTask();
     end;
 
     local procedure DeleteAllRelatedLines();
