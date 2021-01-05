@@ -1,7 +1,7 @@
 /// <summary>
-/// PageExtension TKA Resource List (ID 81005) extends Record Resource List.
+/// PageExtension TKA SWEM Resource List (ID 81005) extends Record Resource List.
 /// </summary>
-pageextension 81005 "TKA Resource List" extends "Resource List"
+pageextension 81005 "TKA SWEM Resource List" extends "Resource List"
 {
     layout
     {
