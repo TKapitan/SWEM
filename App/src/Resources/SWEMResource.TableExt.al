@@ -21,6 +21,12 @@ tableextension 81001 "TKA SWEM Resource" extends Resource
                 ValidateEmail();
             end;
         }
+        field(81017; "TKA SWEM Salesperson Code"; Code[20])
+        {
+            Caption = 'Salesperson Code';
+            TableRelation = "Salesperson/Purchaser".Code;
+            DataClassification = EndUserPseudonymousIdentifiers;
+        }
     }
 
     local procedure ValidateEmail()

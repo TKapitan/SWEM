@@ -7,6 +7,11 @@ pageextension 81005 "TKA SWEM Resource List" extends "Resource List"
     {
         addafter("Resource Group No.")
         {
+            field("TKA SWEM Salesperson Code"; Rec."TKA SWEM Salesperson Code")
+            {
+                ToolTip = 'Specifies code of the salesperson that is linked to this resource.';
+                ApplicationArea = All;
+            }
             field("TKA SWEM Project Mandatory"; Rec."TKA SWEM Project Mandatory")
             {
                 ToolTip = 'Specifies whether all posted service order records must have link to projects.';
