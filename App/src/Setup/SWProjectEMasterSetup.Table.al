@@ -57,6 +57,11 @@ table 81003 "TKA SW Project E-Master Setup"
             Caption = 'Service Field Validation - Service Reports';
             DataClassification = SystemMetadata;
         }
+        field(105; "TKA Service Valid. - Priority"; Enum "TKA Service API Field Valid.")
+        {
+            Caption = 'Service Field Validation - Priority';
+            DataClassification = SystemMetadata;
+        }
         field(150; "TKA Default Unbilled Work Type"; Code[10])
         {
             Caption = 'Default Unbilled Work Type';

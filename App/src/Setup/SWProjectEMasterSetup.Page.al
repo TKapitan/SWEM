@@ -61,6 +61,11 @@ page 81010 "TKA SW Project E-Master Setup"
                     ToolTip = 'Specifies ways how service type field should be validated when the value is changed in API';
                     ApplicationArea = All;
                 }
+                field("TKA Service Valid. - Priority"; Rec."TKA Service Valid. - Priority")
+                {
+                    ToolTip = 'Specifies ways how service priority field should be validated when the value is changed in API';
+                    ApplicationArea = All;
+                }
                 field("TKA Service Valid. - Depart."; Rec."TKA Service Valid. - Depart.")
                 {
                     ToolTip = 'Specifies ways how service source department field should be validated when the value is changed in API';

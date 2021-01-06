@@ -46,6 +46,13 @@ page 81009 "TKA Sales Service Orders API"
                         Rec.ValidateAPIValue(Rec.FieldNo("TKA Service Status"), ServiceStatus);
                     end;
                 }
+                field(servicePriority; ServicePriority)
+                {
+                    trigger OnValidate();
+                    begin
+                        Rec.ValidateAPIValue(Rec.FieldNo("TKA Service Priority"), ServicePriority);
+                    end;
+                }
                 field(serviceType; ServiceType)
                 {
                     trigger OnValidate();
@@ -105,7 +112,7 @@ page 81009 "TKA Sales Service Orders API"
     end;
 
     var
-        AssignedSalesperson, ServiceStatus, ServiceType, ServiceSourceDepartment : Text[50];
+        AssignedSalesperson, ServiceStatus, ServicePriority, ServiceType, ServiceSourceDepartment : Text[50];
         NoCustomerDefinedErr: Label 'Pro tisk požadavků musí být určen zákazník.';
 
     /// <summary>

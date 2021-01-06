@@ -21,4 +21,8 @@ enum 81002 "TKA Service Field Value Type"
     {
         Caption = 'Service Source Department';
     }
+    value(20; "TKA Service Priority")
+    {
+        Caption = 'Service Priority';
+    }
 }
