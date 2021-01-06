@@ -32,6 +32,11 @@ page 81010 "TKA SW Project E-Master Setup"
                     ToolTip = 'Specifies No. series that will be used for creating sales service orders.';
                     ApplicationArea = All;
                 }
+                field("TKA Service Order Batch Nos."; Rec."TKA Service Order Batch Nos.")
+                {
+                    ToolTip = 'Specifies No. series that will be used for creating service order batches.';
+                    ApplicationArea = All;
+                }
                 field("TKA Project Nos."; Rec."TKA Project Nos.")
                 {
                     ToolTip = 'Specifies No. series that will be used for creating projects.';
@@ -59,6 +64,11 @@ page 81010 "TKA SW Project E-Master Setup"
                 field("TKA Service Valid. - Depart."; Rec."TKA Service Valid. - Depart.")
                 {
                     ToolTip = 'Specifies ways how service source department field should be validated when the value is changed in API';
+                    ApplicationArea = All;
+                }
+                field("TKA Service Valid. - Report"; Rec."TKA Service Valid. - Report")
+                {
+                    ToolTip = 'Specifies ways how service reports should be validated when the value is changed in API';
                     ApplicationArea = All;
                 }
             }

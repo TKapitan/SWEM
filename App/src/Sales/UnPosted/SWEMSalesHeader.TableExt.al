@@ -46,6 +46,12 @@ tableextension 81002 "TKA SWEM Sales Header" extends "Sales Header"
             Caption = 'Service Planned Qty.';
             DataClassification = CustomerContent;
         }
+        field(81018; "TKA Service Batch Code Filter"; Code[20])
+        {
+            Caption = 'Service Batch Code';
+            FieldClass = FlowFilter;
+            TableRelation = "TKA Service Batch"."TKA Code";
+        }
 
 
         // field(; "TKA ART CU Serv. Order Batch Code"; Code[10])
@@ -348,6 +354,11 @@ tableextension 81002 "TKA SWEM Sales Header" extends "Sales Header"
         //     }
     }
 
+    keys
+    {
+        key("TKA SWEM 1"; "TKA SWEM Service Order") { }
+    }
+
     var
         TKASWProjectEMasterSetup: Record "TKA SW Project E-Master Setup";
         FieldDoesNotExistsErr: Label 'Field with number %1 does not exists or does not have setup specified in %2.', Comment = '%1 - Number of the field, %2 - caption of the table';
@@ -512,6 +523,33 @@ tableextension 81002 "TKA SWEM Sales Header" extends "Sales Header"
             else
                 Error(FieldDoesNotExistsErr, FieldNo, Rec.TableCaption());
         end;
+    end;
+
+    internal procedure CreateDistinctBatchCodesBuffer(var SalesHeader: Record "Sales Header"; var TempTKAServiceBatch: Record "TKA Service Batch" temporary);
+    var
+        SalesLine: Record "Sales Line";
+        FunctionShouldBeCalledWithTemporaryRecErr: Label 'The function should be called with temporary record as a parameter. This is programming issue.';
+    begin
+        if not TempTKAServiceBatch.IsTemporary() then
+            Error(FunctionShouldBeCalledWithTemporaryRecErr);
+        TempTKAServiceBatch.DeleteAll();
+
+        if SalesHeader.FindSet() then
+            repeat
+                SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+                SalesLine.SetRange("Document No.", SalesHeader."No.");
+                SalesLine.SetFilter(Quantity, '<>0');
+                if SalesLine.FindSet() then
+                    repeat
+                        TempTKAServiceBatch.SetRange("TKA Code", SalesLine."TKA Service Batch Code");
+                        if TempTKAServiceBatch.IsEmpty() then begin
+                            TempTKAServiceBatch.Init();
+                            TempTKAServiceBatch."TKA Code" := SalesLine."TKA Service Batch Code";
+                            TempTKAServiceBatch.Insert(false);
+                        end;
+                    until SalesLine.Next() = 0;
+            until SalesHeader.Next() = 0;
+        Clear(TempTKAServiceBatch);
     end;
 
     /// <summary>

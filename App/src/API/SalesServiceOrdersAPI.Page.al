@@ -106,5 +106,121 @@ page 81009 "TKA Sales Service Orders API"
 
     var
         AssignedSalesperson, ServiceStatus, ServiceType, ServiceSourceDepartment : Text[50];
+        NoCustomerDefinedErr: Label 'Pro tisk požadavků musí být určen zákazník.';
+
+    /// <summary>
+    /// printServiceOrder.
+    /// </summary>
+    /// <param name="projectReportKey">Text[50].</param>
+    /// <param name="sendToEmail">Text.</param>
+    /// <returns>Return value of type Text.</returns>
+    [ServiceEnabled]
+    procedure printServiceOrder(projectReportKey: Text[50]; sendToEmail: Text): Text
+    var
+        SalesHeader: Record "Sales Header";
+        TKAProjectDocument: Record "TKA Project Document";
+
+        TKASWProjectEMasterMgmt: Codeunit "TKA SW Project E-Master Mgmt.";
+
+        AttachmentRecordRef: RecordRef;
+    begin
+        if Rec."Sell-to Customer No." = '' then
+            Error(NoCustomerDefinedErr);
+
+        // Init Email
+        TKASWProjectEMasterMgmt.InitEmail(projectReportKey, sendToEmail);
+        // Load Project Report Configuration
+        TKASWProjectEMasterMgmt.GetProjectReportSetting(projectReportKey, TKAProjectDocument);
+
+        // Create report as an attachment and attach to newly created email
+        SalesHeader.SetRange("Document Type", Rec."Document Type");
+        SalesHeader.SetRange("No.", Rec."No.");
+        AttachmentRecordRef.SetTable(SalesHeader);
+        TKASWProjectEMasterMgmt.AddAttachment(TKAProjectDocument."TKA Report Object No.", TKAProjectDocument."TKA Report Attachment Name", AttachmentRecordRef);
+
+        // Send
+        TKASWProjectEMasterMgmt.SendEmail();
+    end;
+
+    /// <summary>
+    /// printAllServiceOrdersByResourceGroup.
+    /// </summary>
+    /// <param name="projectReportKey">Text[50].</param>
+    /// <param name="sendToEmail">Text.</param>
+    /// <param name="limitToResourceGroups">Text.</param>
+    /// <returns>Return value of type Text.</returns>
+    [ServiceEnabled]
+    procedure printAllServiceOrdersByResourceGroup(projectReportKey: Text[50]; sendToEmail: Text; limitToResourceGroups: Text): Text
+    var
+        Resource: Record Resource;
+        SalesHeader: Record "Sales Header";
+        TKAProjectDocument: Record "TKA Project Document";
+        TempTKAServiceBatch: Record "TKA Service Batch" temporary;
+
+        TKASWProjectEMasterMgmt: Codeunit "TKA SW Project E-Master Mgmt.";
+
+        AttachmentRecordRef: RecordRef;
+        SalespersonFilter: Text;
+    begin
+        if Rec."Sell-to Customer No." = '' then
+            Error(NoCustomerDefinedErr);
+
+        // Init Email
+        TKASWProjectEMasterMgmt.InitEmail(projectReportKey, sendToEmail);
+        // Load Project Report Configuration
+        TKASWProjectEMasterMgmt.GetProjectReportSetting(projectReportKey, TKAProjectDocument);
+
+        // Create report as an attachment and attach to newly created email
+        SalesHeader.SetRange("Document Type", Rec."Document Type");
+        SalesHeader.SetRange("No.", Rec."No.");
+
+        // Apply filters
+        Clear(SalesHeader);
+        SalesHeader.SetRange("Document Type", SalesHeader."Document Type"::Order);
+        SalesHeader.SetRange("Sell-to Customer No.", Rec."Sell-to Customer No.");
+        SalesHeader.SetRange("TKA SWEM Service Order", true);
+        // TODO limit to sales headers with specific service status?
+        if limitToResourceGroups <> '' then begin
+            Resource.SetRange(Blocked, false);
+            Resource.SetFilter("TKA SWEM Salesperson Code", '<>''''');
+            Resource.SetFilter("Resource Group No.", limitToResourceGroups);
+
+            SalespersonFilter := '';
+            if Resource.FindSet() then
+                repeat
+                    if StrPos(SalespersonFilter, Resource."TKA SWEM Salesperson Code") = 0 then begin
+                        if SalespersonFilter <> '' then
+                            SalespersonFilter += '|';
+                        SalespersonFilter += Resource."TKA SWEM Salesperson Code";
+                    end;
+                until Resource.Next() = 0;
+
+            if SalespersonFilter <> '' then
+                SalesHeader.SetFilter("Salesperson Code", SalespersonFilter);
+        end;
+
+        // Find All Used Batch Codes in selected documents
+        Rec.CreateDistinctBatchCodesBuffer(SalesHeader, TempTKAServiceBatch);
+
+        // Create different attachment file for each batch code
+        TempTKAServiceBatch.SetFilter("TKA Code", '<>''''');
+        if TempTKAServiceBatch.FindSet() then
+            repeat
+                SalesHeader.SetRange("TKA Service Batch Code Filter", TempTKAServiceBatch."TKA Code");
+                AttachmentRecordRef.SetTable(SalesHeader);
+                TKASWProjectEMasterMgmt.AddAttachment(TKAProjectDocument."TKA Report Object No.", TKAProjectDocument."TKA Report Attachment Name", AttachmentRecordRef);
+            until TempTKAServiceBatch.Next() = 0;
+
+        // Look for documents without service batch code
+        TempTKAServiceBatch.SetRange("TKA Code", '');
+        if not TempTKAServiceBatch.IsEmpty() then begin
+            SalesHeader.SetRange("TKA Service Batch Code Filter", '');
+            AttachmentRecordRef.SetTable(SalesHeader);
+            TKASWProjectEMasterMgmt.AddAttachment(TKAProjectDocument."TKA Report Object No.", TKAProjectDocument."TKA Report Attachment Name", AttachmentRecordRef);
+        end;
+
+        // Send
+        TKASWProjectEMasterMgmt.SendEmail();
+    end;
 }
 

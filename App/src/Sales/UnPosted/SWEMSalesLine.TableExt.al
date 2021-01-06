@@ -39,5 +39,12 @@ tableextension 81004 "TKA SWEM Sales Line" extends "Sales Line"
             Caption = 'Time To';
             DataClassification = CustomerContent;
         }
+        field(81018; "TKA Service Batch Code"; Code[20])
+        {
+            Caption = 'Service Batch Code';
+            TableRelation = "TKA Service Batch"."TKA Code";
+            DataClassification = CustomerContent;
+        }
+
     }
 }

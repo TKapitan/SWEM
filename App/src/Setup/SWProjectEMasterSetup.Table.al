@@ -25,6 +25,13 @@ table 81003 "TKA SW Project E-Master Setup"
             TableRelation = "No. Series".Code;
             DataClassification = SystemMetadata;
         }
+        field(22; "TKA Service Order Batch Nos."; Code[20])
+        {
+            Caption = 'Service Order Batch Nos.';
+            TableRelation = "No. Series".Code;
+            DataClassification = SystemMetadata;
+        }
+
         field(100; "TKA Service Valid. - Salesper."; Enum "TKA Service API Field Valid.")
         {
             Caption = 'Service Field Validation - Salesperson';
@@ -43,6 +50,11 @@ table 81003 "TKA SW Project E-Master Setup"
         field(103; "TKA Service Valid. - Depart."; Enum "TKA Service API Field Valid.")
         {
             Caption = 'Service Field Validation - Source Department';
+            DataClassification = SystemMetadata;
+        }
+        field(104; "TKA Service Valid. - Report"; enum "TKA Service API Field Valid.")
+        {
+            Caption = 'Service Field Validation - Service Reports';
             DataClassification = SystemMetadata;
         }
         field(150; "TKA Default Unbilled Work Type"; Code[10])
