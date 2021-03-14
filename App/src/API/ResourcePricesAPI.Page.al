@@ -18,7 +18,7 @@ page 81008 "TKA Resource Prices API"
 
     SourceTable = "Price List Line";
 
-    SourceTableView = sorting("Work Type Code", "Unit Price") order(ascending) where("Price Type" = filter(Any | Sale), "Amount Type" = filter(Price), "Asset Type" = filter(Resource | "Resource Group"));
+    SourceTableView = sorting("Work Type Code") order(ascending) where("Price Type" = filter(Any | Sale), "Amount Type" = filter(Price), "Asset Type" = filter(Resource | "Resource Group"));
 
     layout
     {
