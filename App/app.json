@@ -25,5 +25,5 @@
   "contextSensitiveHelpUrl": "http://www.kepty.cz",
   "applicationInsightsKey": "1a1f1e24-be4e-44b4-83af-df355d668138",
   "showMyCode": true,
-  "runtime": "6.0"
+  "runtime": "7.0"
 }
