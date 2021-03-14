@@ -32,6 +32,12 @@ table 81001 "TKA Project Task"
             Caption = 'Closed';
             DataClassification = SystemMetadata;
         }
+        field(75; "TKA Presentation Order"; Integer)
+        {
+            Caption = 'TKA Presentation Order';
+            Editable = false;
+            DataClassification = SystemMetadata;
+        }
         field(100; "TKA Invoicing Work Type Code"; Code[10])
         {
             Caption = 'Invoicing Work Type Code';
@@ -105,11 +111,41 @@ table 81001 "TKA Project Task"
         {
             Clustered = true;
         }
+        key("TKA Key 1"; "TKA Project No.", "TKA Presentation Order") { }
     }
 
+    trigger OnInsert()
+    var
+        TKAProjectTask: Record "TKA Project Task";
+
+        NewPresentationOrder: Integer;
+    begin
+        if Rec."TKA Presentation Order" <> 0 then
+            exit;
+
+        NewPresentationOrder := 1;
+        TKAProjectTask.SetCurrentKey("TKA Project No.", "TKA Presentation Order");
+        TKAProjectTask.SetRange("TKA Project No.", Rec."TKA Project No.");
+        if TKAProjectTask.FindLast() then
+            NewPresentationOrder += TKAProjectTask."TKA Presentation Order";
+        Rec.Validate("TKA Presentation Order", NewPresentationOrder);
+    end;
+
     trigger OnDelete();
+    var
+        TKAProjectTask: Record "TKA Project Task";
     begin
         CheckExistingLinkedRecords();
+
+        if Rec."TKA Presentation Order" = 0 then
+            exit;
+        TKAProjectTask.SetRange("TKA Project No.", Rec."TKA Project No.");
+        TKAProjectTask.SetFilter("TKA Presentation Order", '<>1&>%1', Rec."TKA Presentation Order");
+        if TKAProjectTask.FindSet() then
+            repeat
+                TKAProjectTask.Validate("TKA Presentation Order", TKAProjectTask."TKA Presentation Order" - 1);
+                TKAProjectTask.Modify(true);
+            until TKAProjectTask.Next() < 1;
     end;
 
     trigger OnRename()
@@ -145,5 +181,91 @@ table 81001 "TKA Project Task"
         SalesLine.SetRange("TKA Project Task No.", Rec."TKA Task No.");
         if not SalesLine.IsEmpty() then
             Error(LinkedRecordsExistErr, SalesLine.TableCaption());
+    end;
+
+    /// <summary>
+    /// MoveDown
+    /// Move the project task down by one line (increasing the presentation order)
+    /// </summary>
+    /// <param name="MoveAll">Boolean, if true, all records below are moved down, if false, only the selected record is moved down. In case of already existing record with 
+    /// the same presentation order, the record is moved up (changing possition of records).</param>
+    procedure MoveDown(MoveAll: Boolean)
+    begin
+        MoveDownOrUp(true, false, MoveAll);
+    end;
+
+    /// <summary>
+    /// MoveUp
+    /// Move the project task up by one line (decreasing the presentation order)
+    /// </summary>
+    procedure MoveUp()
+    begin
+        MoveDownOrUp(false, true, false);
+    end;
+
+    local procedure MoveDownOrUp(MoveDown: Boolean; MoveUp: Boolean; MoveAll: Boolean)
+    var
+        TKAProjectTask: Record "TKA Project Task";
+
+        NewPresentationOrder: Integer;
+        NothingBelow, NothingAbove : Boolean;
+    begin
+        if not (MoveDown xor MoveUp) then
+            exit;
+
+        case true of
+            MoveDown:
+                begin
+                    NothingBelow := false;
+                    NewPresentationOrder := Rec."TKA Presentation Order" + 1;
+                    TKAProjectTask.SetRange("TKA Project No.", Rec."TKA Project No.");
+                    TKAProjectTask.SetFilter("TKA Presentation Order", '>%1', Rec."TKA Presentation Order");
+                    if not TKAProjectTask.FindSet() then
+                        NothingBelow := true;
+
+                    if not NothingBelow then
+                        if MoveAll then
+                            repeat
+                                // Move all lines below by one row
+                                TKAProjectTask.Validate("TKA Presentation Order", TKAProjectTask."TKA Presentation Order" + 1);
+                                TKAProjectTask.Modify(true);
+                            until TKAProjectTask.Next() < 1
+                        else begin
+                            TKAProjectTask.SetFilter("TKA Task No.", '<>%1', Rec."TKA Task No.");
+                            TKAProjectTask.SetRange("TKA Presentation Order", NewPresentationOrder);
+                            if TKAProjectTask.FindSet() then
+                                repeat
+                                    // Just switch possition with line below (should be called once only)
+                                    TKAProjectTask.Validate("TKA Presentation Order", TKAProjectTask."TKA Presentation Order" - 1);
+                                    TKAProjectTask.Modify(true);
+                                until TKAProjectTask.Next() < 1;
+                        end;
+                    if not NothingBelow or MoveAll then begin
+                        Rec.Validate("TKA Presentation Order", NewPresentationOrder);
+                        Rec.Modify(true);
+                    end;
+                end;
+            MoveUp:
+                begin
+                    if Rec."TKA Presentation Order" <= 1 then
+                        exit;
+
+                    NothingAbove := false;
+                    TKAProjectTask.SetCurrentKey("TKA Project No.", "TKA Presentation Order");
+                    TKAProjectTask.SetRange("TKA Project No.", Rec."TKA Project No.");
+                    TKAProjectTask.SetRange("TKA Presentation Order", Rec."TKA Presentation Order" - 1);
+                    if not TKAProjectTask.FindFirst() then
+                        NothingAbove := true;
+
+                    Rec.Validate("TKA Presentation Order", Rec."TKA Presentation Order" - 1);
+                    Rec.Modify(true);
+
+                    if NothingAbove then
+                        exit;
+
+                    TKAProjectTask.Validate("TKA Presentation Order", TKAProjectTask."TKA Presentation Order" + 1);
+                    TKAProjectTask.Modify(true);
+                end;
+        end
     end;
 }

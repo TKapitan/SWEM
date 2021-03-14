@@ -8,6 +8,7 @@ page 81002 "TKA Project Task Subform"
     PageType = ListPart;
     UsageCategory = None;
     SourceTable = "TKA Project Task";
+    SourceTableView = sorting("TKA Presentation Order") order(ascending);
 
     layout
     {
@@ -75,4 +76,62 @@ page 81002 "TKA Project Task Subform"
             }
         }
     }
+    actions
+    {
+        area(Processing)
+        {
+            action("TKA Move Down")
+            {
+                Caption = 'Move Down';
+                ToolTip = 'Allows to move project task down by one line.';
+                Image = MoveDown;
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Rec.MoveDown(false);
+                end;
+            }
+            action("TKA Move Up")
+            {
+                Caption = 'Move Up';
+                ToolTip = 'Allows to move project task up by one line.';
+                Image = MoveUp;
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    Rec.MoveUp();
+                end;
+            }
+        }
+    }
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        TKAProjectTask: Record "TKA Project Task";
+        NewPresentationOrder: Integer;
+    begin
+        case BelowxRec of
+            true:
+                begin
+                    NewPresentationOrder := 1;
+                    TKAProjectTask.SetCurrentKey("TKA Project No.", "TKA Presentation Order");
+                    TKAProjectTask.SetRange("TKA Project No.", xRec."TKA Project No.");
+                    if TKAProjectTask.FindLast() then
+                        NewPresentationOrder += TKAProjectTask."TKA Presentation Order";
+                    Rec.Validate("TKA Presentation Order", NewPresentationOrder);
+                end;
+            false:
+                begin
+                    NewPresentationOrder := xRec."TKA Presentation Order";
+                    TKAProjectTask.SetRange("TKA Project No.", xRec."TKA Project No.");
+                    TKAProjectTask.SetRange("TKA Task No.", xRec."TKA Task No.");
+                    if TKAProjectTask.FindFirst() then
+                        TKAProjectTask.MoveDown(true);
+
+                    Rec.Validate("TKA Presentation Order", NewPresentationOrder);
+                end;
+        end
+    end;
 }
